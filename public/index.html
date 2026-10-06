@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Todo List - SecureDeploy</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #f0f2f5;
+      color: #1a1a1a;
+      line-height: 1.5;
+    }
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #2563eb;
+    }
+    .input-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #2563eb;
+    }
+    button {
+      padding: 12px 20px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    .todo-item {
+      background: white;
+      padding: 16px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .todo-item.completed span {
+      text-decoration: line-through;
+      color: #888;
+    }
+    .todo-item input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+    .todo-item span {
+      flex: 1;
+      font-size: 16px;
+    }
+    .delete-btn {
+      background: #ef4444;
+      padding: 6px 12px;
+      font-size: 14px;
+    }
+    .delete-btn:hover {
+      background: #dc2626;
+    }
+    .empty {
+      text-align: center;
+      color: #666;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📝 Todo List</h1>
+
+    <div class="input-group">
+      <input type="text" id="todoInput" placeholder="Ajouter une nouvelle tâche..." />
+      <button onclick="addTodo()">Ajouter</button>
+    </div>
+
+    <div id="todoList"></div>
+  </div>
+
+  <script>
+    const API_URL = '/todos';
+
+    // Charger les todos au démarrage
+    async function loadTodos() {
+      try {
+        const res = await fetch(API_URL);
+        const todos = await res.json();
+        renderTodos(todos);
+      } catch (err) {
+        console.error('Erreur chargement:', err);
+      }
+    }
+
+    function renderTodos(todos) {
+      const list = document.getElementById('todoList');
+      
+      if (todos.length === 0) {
+        list.innerHTML = '<p class="empty">Aucune tâche pour le moment</p>';
+        return;
+      }
+
+      list.innerHTML = todos.map(todo => `
+        <div class="todo-item ${todo.completed ? 'completed' : ''}">
+          <input type="checkbox" 
+                 ${todo.completed ? 'checked' : ''} 
+                 onchange="toggleTodo(${todo.id}, this.checked)">
+          <span>${todo.title}</span>
+          <button class="delete-btn" onclick="deleteTodo(${todo.id})">Supprimer</button>
+        </div>
+      `).join('');
+    }
+
+    async function addTodo() {
+      const input = document.getElementById('todoInput');
+      const title = input.value.trim();
+      
+      if (!title) return;
+
+      try {
+        await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title })
+        });
+        input.value = '';
+        loadTodos();
+      } catch (err) {
+        console.error('Erreur ajout:', err);
+      }
+    }
+
+    async function toggleTodo(id, completed) {
+      try {
+        await fetch(`${API_URL}/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ completed })
+        });
+        loadTodos();
+      } catch (err) {
+        console.error('Erreur modification:', err);
+      }
+    }
+
+    async function deleteTodo(id) {
+      try {
+        await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+        loadTodos();
+      } catch (err) {
+        console.error('Erreur suppression:', err);
+      }
+    }
+
+    // Permettre d'ajouter avec la touche Entrée
+    document.getElementById('todoInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') addTodo();
+    });
+
+    // Chargement initial
+    loadTodos();
+  </script>
+</body>
+</html>

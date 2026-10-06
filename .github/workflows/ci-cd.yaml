@@ -1,0 +1,42 @@
+name: CI/CD - SecureDeploy Todo App
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Récupération du code
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      # 2. Mise en place de Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # 3. Installation des dépendances
+      - name: Installation des dépendances
+        run: npm ci
+
+      # 4. Vérification simple du code (lint basique)
+      - name: Vérification de la syntaxe
+        run: node --check server.js
+
+      # 5. Build de l'image Docker
+      - name: Build de l'image Docker
+        run: docker build -t securedeploy-todo-app:${{ github.sha }} .
+
+      # 6. (Optionnel) Afficher les images construites
+      - name: Liste des images Docker
+        run: docker images
+
+  # Job bonus : on pourrait ajouter un push vers un registry ici
+  # (Docker Hub, GitHub Container Registry, etc.)
