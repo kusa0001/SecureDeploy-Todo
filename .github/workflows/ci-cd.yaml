@@ -34,9 +34,6 @@ jobs:
       - name: Build de l'image Docker
         run: docker build -t securedeploy-todo-app:${{ github.sha }} .
 
-      # 6. (Optionnel) Afficher les images construites
+      # 6. Afficher les images construites
       - name: Liste des images Docker
         run: docker images
-
-  # Job bonus : on pourrait ajouter un push vers un registry ici
-  # (Docker Hub, GitHub Container Registry, etc.)
